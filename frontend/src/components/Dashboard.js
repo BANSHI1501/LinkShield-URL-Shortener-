@@ -1,4 +1,4 @@
-import {
+﻿import {
   Chart as ChartJS,
   BarController,
   BarElement,
@@ -29,13 +29,15 @@ function showToast(message, type = "success") {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: ${type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#3b82f6"};
+    background: ${ type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#3b82f6"};
     color: white;
-    padding: 14px 20px;
-    border-radius: 8px;
+    padding: 16px 24px;
+    border-radius: 12px;
     z-index: 9999;
     animation: slideIn 0.3s ease-out;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    font-weight: 600;
+    font-size: 14px;
   `;
   toast.textContent = message;
   document.body.appendChild(toast);
@@ -57,6 +59,11 @@ if (!document.querySelector("style[data-toasts]")) {
       from { transform: translateX(0); opacity: 1; }
       to { transform: translateX(400px); opacity: 0; }
     }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    * { transition: all 0.2s ease; }
   `;
   document.head.appendChild(style);
 }
@@ -82,7 +89,7 @@ export async function initDashboard() {
     console.error("Error loading dashboard:", err);
     const container = document.getElementById("dashboard-container");
     if (container) {
-      container.innerHTML = `<h2 style="color: red;">Error: ${err.message}</h2>`;
+      container.innerHTML = `<h2 style="color: red;">Error: ${ err.message}</h2>`;
     }
   }
 }
@@ -101,23 +108,25 @@ function renderDashboard() {
   if (!container) return;
 
   if (!dashboardData) {
-    container.innerHTML = '<div class="flex items-center justify-center h-screen"><h2 class="text-2xl text-white">Loading...</h2></div>';
+    container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);"><span style="font-size: 28px; color: #22c55e; font-weight: bold;">⏳ Loading...</span></div>';
     return;
   }
 
   const chartListHtml =
     chartDataList && chartDataList.length > 0
       ? `
-    <div class="mt-12 mx-auto max-w-md bg-slate-800 rounded-lg p-6 border border-slate-700">
-      <h3 class="text-lg font-bold text-white mb-4">📊 Last 7 Days Clicks</h3>
-      <div class="space-y-2">
-        ${chartDataList
+    <div style="margin-top: 80px; text-align: center;">
+      <h3 style="font-size: 28px; font-weight: 700; color: white; margin-bottom: 30px;">📊 Last 7 Days Analytics</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; max-width: 900px; margin: 0 auto;">
+        ${ chartDataList
           .map(
             (d) =>
-              `<div class="flex justify-between bg-slate-700/50 p-3 rounded-md text-white">
-              <span class="font-semibold">${d.date}</span>
-              <span class="text-green-400 font-bold">${d.clicks} clicks</span>
-            </div>`
+              `<div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); border: 1px solid #22c55e; cursor: pointer;" 
+                  onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 12px 30px rgba(16, 185, 129, 0.5)'"
+                  onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 20px rgba(16, 185, 129, 0.3)'">
+                <p style="color: #f3f4f6; font-size: 12px; margin: 0 0 8px 0; font-weight: 700; letter-spacing: 0.5px;">${d.date}</p>
+                <p style="color: #fbbf24; font-size: 26px; font-weight: 800; margin: 0;">${d.clicks}</p>
+              </div>`
           )
           .join("")}
       </div>
@@ -128,34 +137,39 @@ function renderDashboard() {
   const urlTableHtml =
     dashboardData.urls && dashboardData.urls.length > 0
       ? `
-    <h2 class="text-3xl font-bold text-white mt-12 mb-6">🔗 Your URLs</h2>
-    <div class="mx-auto max-w-6xl overflow-x-auto">
-      <table class="w-full text-white">
-        <thead class="bg-gradient-to-r from-green-600 to-green-700">
-          <tr>
-            <th class="px-6 py-3 text-left font-bold">Short URL</th>
-            <th class="px-6 py-3 text-left font-bold">Original URL</th>
-            <th class="px-6 py-3 text-center font-bold">Clicks</th>
-            <th class="px-6 py-3 text-center font-bold">Action</th>
+    <h2 style="font-size: 32px; font-weight: 700; color: white; text-align: center; margin-top: 80px; margin-bottom: 40px;">🔗 Your URLs</h2>
+    <div style="max-width: 1200px; margin: 0 auto; overflow-x: auto; padding: 0 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: linear-gradient(90deg, #22c55e, #10b981);">
+            <th style="padding: 16px; text-align: left; color: #052e16; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Short Code</th>
+            <th style="padding: 16px; text-align: left; color: #052e16; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Original URL</th>
+            <th style="padding: 16px; text-align: center; color: #052e16; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Clicks</th>
+            <th style="padding: 16px; text-align: center; color: #052e16; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Action</th>
           </tr>
         </thead>
         <tbody>
-          ${dashboardData.urls
+          ${ dashboardData.urls
             .sort((a, b) => b.clicks - a.clicks)
             .map(
               (url, index) => `
-            <tr class="border-b border-slate-700 ${index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-900'} hover:bg-slate-700/50 transition-colors">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <a href="http://localhost:5000/${url.shortCode}" target="_blank" rel="noreferrer" class="text-green-400 hover:text-green-300 font-mono font-bold">${url.shortCode}</a>
-                  ${index === 0 && dashboardData.urls.length > 0 ? '<span class="bg-amber-500 text-black px-2 py-1 rounded text-xs font-bold">🏆 TOP</span>' : ""}
-                  ${url.expiresAt && new Date(url.expiresAt) < new Date() ? '<span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">⏰ EXPIRED</span>' : ""}
+            <tr style="background: ${ index % 2 === 0 ? 'linear-gradient(90deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6))' : 'rgba(15, 23, 42, 0.4)'}; border-bottom: 1px solid rgba(34, 197, 94, 0.15); padding: 0;" 
+                onmouseover="this.style.background='linear-gradient(90deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08))'; this.children[0].style.color='#4ade80'"
+                onmouseout="this.style.background='${ index % 2 === 0 ? 'linear-gradient(90deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6))' : 'rgba(15, 23, 42, 0.4)'}'; this.children[0].style.color='#22c55e'">
+              <td style="padding: 16px; color: #22c55e; font-weight: 700; font-family: monospace; font-size: 13px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <a href="http://localhost:5000/${url.shortCode}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: none;">${url.shortCode}</a>
+                  ${ index === 0 && dashboardData.urls.length > 0 ? '<span style="background: linear-gradient(135deg, #f59e0b, #f97316); color: black; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">🏆 TOP</span>' : ""}
+                  ${ url.expiresAt && new Date(url.expiresAt) < new Date() ? '<span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">⏰ EXPIRED</span>' : ""}
                 </div>
               </td>
-              <td class="px-6 py-4 text-slate-300 text-sm">${url.originalUrl.substring(0, 50)}...</td>
-              <td class="px-6 py-4 text-center font-bold text-green-400">${url.clicks}</td>
-              <td class="px-6 py-4 text-center">
-                <button class="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg text-sm" onclick="navigator.clipboard.writeText('http://localhost:5000/${url.shortCode}'); showToast('Short URL copied! 📋')">
+              <td style="padding: 16px; color: #cbd5e1; font-size: 13px;">${url.originalUrl.substring(0, 60)}...</td>
+              <td style="padding: 16px; text-align: center; color: #4ade80; font-weight: 700; font-size: 14px;">${url.clicks}</td>
+              <td style="padding: 16px; text-align: center;">
+                <button style="padding: 8px 14px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #052e16; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);"
+                  onmouseover="this.style.boxShadow='0 8px 20px rgba(34, 197, 94, 0.4)'; this.style.transform='translateY(-2px)'"
+                  onmouseout="this.style.boxShadow='0 4px 12px rgba(34, 197, 94, 0.2)'; this.style.transform='none'"
+                  onclick="navigator.clipboard.writeText('http://localhost:5000/${url.shortCode}'); showToast('URL copied! 📋', 'success')">
                   📋 Copy
                 </button>
               </td>
@@ -171,68 +185,150 @@ function renderDashboard() {
 
   const createResultHtml = latestShortResult
     ? `
-      <div class="mt-6 p-6 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl shadow-2xl border border-green-500">
-        <h3 class="text-2xl font-bold text-white mb-4">✅ Short URL Created!</h3>
-        <div class="space-y-3 mb-4">
-          <p class="text-white"><strong>Short URL:</strong> <a href="${latestShortResult.shortUrl}" target="_blank" rel="noreferrer" class="text-amber-300 hover:text-amber-200 font-bold">${latestShortResult.shortUrl}</a></p>
-          <p class="text-white"><strong>Short Code:</strong> <span class="font-mono text-amber-300">${latestShortResult.shortCode}</span></p>
-          ${latestShortResult.expiresAt ? `<p class="text-white"><strong>Expiry:</strong> <span class="text-amber-300">${new Date(latestShortResult.expiresAt).toLocaleString()}</span></p>` : ""}
+      <div style="margin-top: 30px; padding: 24px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; box-shadow: 0 20px 50px rgba(16, 185, 129, 0.3); border: 1px solid #22c55e;">
+        <h3 style="margin: 0 0 16px 0; color: white; font-size: 20px; font-weight: 700;">✅ Short URL Created Successfully!</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border-left: 3px solid #fbbf24;">
+            <p style="color: rgba(255,255,255,0.8); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase;">Short URL</p>
+            <a href="${latestShortResult.shortUrl}" target="_blank" rel="noreferrer" style="color: #fbbf24; text-decoration: none; font-size: 13px; font-weight: 700; word-break: break-all;">${latestShortResult.shortUrl}</a>
+          </div>
+          <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border-left: 3px solid #60a5fa;">
+            <p style="color: rgba(255,255,255,0.8); font-size: 11px; margin: 0 0 6px 0; text-transform: uppercase;">Short Code</p>
+            <p style="color: #60a5fa; font-family: monospace; font-size: 13px; font-weight: 700; margin: 0;">${latestShortResult.shortCode}</p>
+          </div>
         </div>
-        <div class="flex gap-3 flex-wrap mb-4">
-          <button onclick="navigator.clipboard.writeText('${latestShortResult.shortUrl}'); showToast('Link copied! 📋')" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg">📋 Copy Link</button>
-          <a href="${latestShortResult.shortUrl}" target="_blank" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">🔗 Open</a>
-          ${latestShortResult.qrCode ? `<a href="${latestShortResult.qrCode}" download="qr-${latestShortResult.shortCode}.png" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">⬇️ Download QR</a>` : ""}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+          <button onclick="navigator.clipboard.writeText('${latestShortResult.shortUrl}'); showToast('Link copied! 📋', 'success')" style="padding: 10px; background: #fbbf24; color: #052e16; border: 0; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.3s; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);" onmouseover="this.style.boxShadow='0 8px 20px rgba(251, 191, 36, 0.5)'" onmouseout="this.style.boxShadow='0 4px 12px rgba(251, 191, 36, 0.3)'">📋 Copy Link</button>
+          <a href="${latestShortResult.shortUrl}" target="_blank" style="padding: 10px; background: #3b82f6; color: white; border: 0; border-radius: 8px; cursor: pointer; font-weight: 700; text-decoration: none; text-align: center; transition: all 0.3s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" onmouseover="this.style.boxShadow='0 8px 20px rgba(59, 130, 246, 0.5)'" onmouseout="this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'">🔗 Open</a>
+          ${ latestShortResult.qrCode ? `<a href="${latestShortResult.qrCode}" download="qr-${latestShortResult.shortCode}.png" style="padding: 10px; background: #8b5cf6; color: white; border: 0; border-radius: 8px; cursor: pointer; font-weight: 700; text-decoration: none; text-align: center; transition: all 0.3s; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);" onmouseover="this.style.boxShadow='0 8px 20px rgba(139, 92, 246, 0.5)'" onmouseout="this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.3)'">⬇️ QR</a>` : ""}
         </div>
-        ${latestShortResult.qrCode ? `<div class="bg-white p-3 rounded-lg w-fit mx-auto"><img src="${latestShortResult.qrCode}" alt="QR Code" class="w-40 h-40" /></div>` : ""}
+        ${ latestShortResult.qrCode ? `
+          <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div style="background: white; padding: 12px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+              <img src="${latestShortResult.qrCode}" alt="QR Code" style="width: 160px; height: 160px; display: block;" />
+            </div>
+          </div>
+        ` : ""}
       </div>
     `
     : "";
 
   container.innerHTML = `
-    <style>
-      .btn-hover:hover { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
-    </style>
-    <div class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 p-8">
-      <h1 class="text-5xl font-bold text-center text-white mb-2">📊 Dashboard</h1>
-      <p class="text-center text-slate-400 mb-8">Manage your short URLs with advanced analytics</p>
-
-      <div class="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-xl max-w-2xl mx-auto mb-10 p-8">
-        <h2 class="text-2xl font-bold text-white mb-6">🚀 Create Short URL</h2>
-        <form id="shorten-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input id="original-url" type="url" placeholder="Original URL (required)" required class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
-          <input id="custom-shortcode" type="text" placeholder="Custom short code (optional)" pattern="^[a-zA-Z0-9_-]{3,20}$" class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
-          <input id="url-password" type="text" placeholder="Password (optional)" class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
-          <input id="expires-at" type="datetime-local" class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
-          <button id="shorten-btn" type="submit" class="md:col-span-2 text-lg py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg btn-hover">🚀 Generate Short URL + QR</button>
-        </form>
-        <div id="shorten-message" class="mt-4"></div>
-        ${createResultHtml}
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-10">
-        <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-green-500/30 shadow-lg hover:shadow-green-500/20 text-center">
-          <h3 class="text-slate-300 text-lg font-semibold">Total URLs</h3>
-          <h1 class="text-5xl font-bold text-green-400">${dashboardData.totalUrls || 0}</h1>
+    <div style="min-height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); padding: 40px 20px; position: relative;">
+      <div style="position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.08), transparent 50%); pointer-events: none; z-index: 0;"></div>
+      
+      <div style="position: relative; z-index: 1; max-width: 1400px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 50px;">
+          <h1 style="font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #22c55e, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 0 12px 0;">📊 Dashboard</h1>
+          <p style="color: #94a3b8; font-size: 16px; margin: 0;">Master your URL shortening with incredible analytics</p>
         </div>
 
-        <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-green-500/30 shadow-lg hover:shadow-green-500/20 text-center">
-          <h3 class="text-slate-300 text-lg font-semibold">Total Clicks</h3>
-          <h1 class="text-5xl font-bold text-green-400">${dashboardData.totalClicks || 0}</h1>
+        <div style="max-width: 900px; margin: 0 auto 60px auto; padding: 32px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px);">
+          <h2 style="font-size: 24px; font-weight: 700; color: white; margin: 0 0 24px 0;">🚀 Create Short URL</h2>
+          <form id="shorten-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <input id="original-url" type="url" placeholder="Original URL (required)" required 
+              style="padding: 12px 16px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(34, 197, 94, 0.3); color: white; border-radius: 10px; font-size: 14px; outline: none;" 
+              onfocus="this.style.borderColor='#22c55e'; this.style.boxShadow='0 0 15px rgba(34, 197, 94, 0.4)'"
+              onblur="this.style.borderColor='rgba(34, 197, 94, 0.3)'; this.style.boxShadow='none'" />
+            <input id="custom-shortcode" type="text" placeholder="Custom code (optional)" pattern="^[a-zA-Z0-9_-]{3,20}$"
+              style="padding: 12px 16px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(34, 197, 94, 0.3); color: white; border-radius: 10px; font-size: 14px; outline: none;"
+              onfocus="this.style.borderColor='#22c55e'; this.style.boxShadow='0 0 15px rgba(34, 197, 94, 0.4)'"
+              onblur="this.style.borderColor='rgba(34, 197, 94, 0.3)'; this.style.boxShadow='none'" />
+            <input id="url-password" type="text" placeholder="Password (optional)"
+              style="padding: 12px 16px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(34, 197, 94, 0.3); color: white; border-radius: 10px; font-size: 14px; outline: none;"
+              onfocus="this.style.borderColor='#22c55e'; this.style.boxShadow='0 0 15px rgba(34, 197, 94, 0.4)'"
+              onblur="this.style.borderColor='rgba(34, 197, 94, 0.3)'; this.style.boxShadow='none'" />
+            <input id="expires-at" type="datetime-local"
+              style="padding: 12px 16px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(34, 197, 94, 0.3); color: white; border-radius: 10px; font-size: 14px; outline: none;"
+              onfocus="this.style.borderColor='#22c55e'; this.style.boxShadow='0 0 15px rgba(34, 197, 94, 0.4)'"
+              onblur="this.style.borderColor='rgba(34, 197, 94, 0.3)'; this.style.boxShadow='none'" />
+            <button id="shorten-btn" type="submit"
+              style="grid-column: 1 / -1; padding: 14px 24px; background: linear-gradient(135deg, #22c55e, #10b981); color: #052e16; border: 0; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3); text-transform: uppercase; letter-spacing: 0.5px;"
+              onmouseover="this.style.boxShadow='0 12px 30px rgba(34, 197, 94, 0.5)'; this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.boxShadow='0 8px 20px rgba(34, 197, 94, 0.3)'; this.style.transform='none'">
+              🚀 Generate Short URL + QR
+            </button>
+          </form>
+          <div id="shorten-message" style="margin-top: 16px;"></div>
+          ${ createResultHtml}
         </div>
-      </div>
 
-      <div class="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-xl max-w-3xl mx-auto mb-10 p-8">
-        <h2 class="text-2xl font-bold text-white mb-6">📊 7-Day Click Chart</h2>
-        <canvas id="clicks-chart" class="w-full"></canvas>
-      </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 80px;">
+          <div style="padding: 32px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; box-shadow: 0 8px 20px rgba(34, 197, 94, 0.2); cursor: pointer;"
+            onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 16px 40px rgba(34, 197, 94, 0.4)'"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 20px rgba(34, 197, 94, 0.2)'">
+            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Total URLs Created</p>
+            <h3 style="color: #22c55e; font-size: 42px; font-weight: 800; margin: 0; line-height: 1;">${ dashboardData.totalUrls || 0}</h3>
+            <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #22c55e, transparent); margin-top: 12px;"></div>
+          </div>
 
-      ${chartListHtml}
-      ${urlTableHtml}
+          <div style="padding: 32px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2); cursor: pointer;"
+            onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 16px 40px rgba(59, 130, 246, 0.4)'"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 20px rgba(59, 130, 246, 0.2)'">
+            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Total Clicks Tracked</p>
+            <h3 style="color: #3b82f6; font-size: 42px; font-weight: 800; margin: 0; line-height: 1;">${ dashboardData.totalClicks || 0}</h3>
+            <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #3b82f6, transparent); margin-top: 12px;"></div>
+          </div>
+        </div>
+
+        <div style="max-width: 900px; margin: 0 auto 80px auto; padding: 32px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
+          <h2 style="font-size: 22px; font-weight: 700; color: white; margin: 0 0 24px 0;">📈 7-Day Performance Chart</h2>
+          <canvas id="clicks-chart" style="width: 100%;"></canvas>
+        </div>
+
+        ${ chartListHtml}
+        ${ urlTableHtml}
+      </div>
     </div>
   `;
 
   renderBarChart();
   bindShortenForm();
+}
+
+function renderBarChart() {
+  if (!chartDataList || chartDataList.length === 0) return;
+
+  const canvas = document.getElementById("clicks-chart");
+  if (!canvas) return;
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance = new ChartJS(canvas, {
+    type: "bar",
+    data: {
+      labels: chartDataList.map((d) => d.date),
+      datasets: [
+        {
+          label: "Clicks",
+          data: chartDataList.map((d) => d.clicks),
+          backgroundColor: "linear-gradient(135deg, #22c55e, #10b981)",
+          borderColor: "#22c55e",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: "white", font: { size: 13, weight: "bold" } } },
+      },
+      scales: {
+        x: { 
+          ticks: { color: "#cbd5e1", font: { size: 12 } }, 
+          grid: { color: "rgba(34, 197, 94, 0.1)" } 
+        },
+        y: { 
+          ticks: { color: "#cbd5e1", font: { size: 12 } }, 
+          grid: { color: "rgba(34, 197, 94, 0.1)" } 
+        },
+      },
+    },
+  });
 }
 
 function bindShortenForm() {
@@ -334,7 +430,7 @@ function bindShortenForm() {
       showToast("🎉 Short URL created with QR code!", "success");
       form.reset();
       const inputs = form.querySelectorAll("input");
-      inputs.forEach((input) => (input.style.borderColor = "#334155"));
+      inputs.forEach((input) => (input.style.borderColor = "rgba(34, 197, 94, 0.3)"));
 
       await initDashboard();
     } catch (error) {
@@ -349,43 +445,5 @@ function bindShortenForm() {
         submitButton.textContent = "🚀 Generate Short URL + QR";
       }
     }
-  });
-}
-
-function renderBarChart() {
-  if (!chartDataList || chartDataList.length === 0) return;
-
-  const canvas = document.getElementById("clicks-chart");
-  if (!canvas) return;
-
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
-
-  chartInstance = new ChartJS(canvas, {
-    type: "bar",
-    data: {
-      labels: chartDataList.map((d) => d.date),
-      datasets: [
-        {
-          label: "Clicks",
-          data: chartDataList.map((d) => d.clicks),
-          backgroundColor: "linear-gradient(90deg, #22c55e, #16a34a)",
-          borderColor: "#22c55e",
-          borderWidth: 2,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { labels: { color: "white" } },
-      },
-      scales: {
-        x: { ticks: { color: "white" }, grid: { color: "#334155" } },
-        y: { ticks: { color: "white" }, grid: { color: "#334155" } },
-      },
-    },
   });
 }
