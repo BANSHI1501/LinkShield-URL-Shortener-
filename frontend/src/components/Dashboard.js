@@ -16,7 +16,7 @@ ChartJS.register(
   Legend
 );
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://linkshield-url-shortener-soc2.onrender.com").replace(/\/$/, "");
 const SHORTENER_BASE_URL = (import.meta.env.VITE_SHORTENER_BASE_URL || API_BASE_URL).replace(/\/$/, "");
 
 // Get token from localStorage, fallback to demo token

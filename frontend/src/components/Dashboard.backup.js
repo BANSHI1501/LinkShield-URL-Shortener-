@@ -63,14 +63,14 @@ if (!document.querySelector("style[data-toasts]")) {
 
 export async function initDashboard() {
   try {
-    const res1 = await fetch("http://localhost:5000/analytics", {
+    const res1 = await fetch("https://linkshield-url-shortener-soc2.onrender.com/analytics", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     dashboardData = await res1.json();
 
-    const res2 = await fetch("http://localhost:5000/analytics/last7days", {
+    const res2 = await fetch("https://linkshield-url-shortener-soc2.onrender.com/analytics/last7days", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -147,7 +147,7 @@ function renderDashboard() {
             <tr class="border-b border-slate-700 ${index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-900'} hover:bg-slate-700/50 transition-colors">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
-                  <a href="http://localhost:5000/${url.shortCode}" target="_blank" rel="noreferrer" class="text-green-400 hover:text-green-300 font-mono font-bold">${url.shortCode}</a>
+                  <a href="https://linkshield-url-shortener-soc2.onrender.com/${url.shortCode}" target="_blank" rel="noreferrer" class="text-green-400 hover:text-green-300 font-mono font-bold">${url.shortCode}</a>
                   ${index === 0 && dashboardData.urls.length > 0 ? '<span class="bg-amber-500 text-black px-2 py-1 rounded text-xs font-bold">🏆 TOP</span>' : ""}
                   ${url.expiresAt && new Date(url.expiresAt) < new Date() ? '<span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">⏰ EXPIRED</span>' : ""}
                 </div>
@@ -155,7 +155,7 @@ function renderDashboard() {
               <td class="px-6 py-4 text-slate-300 text-sm">${url.originalUrl.substring(0, 50)}...</td>
               <td class="px-6 py-4 text-center font-bold text-green-400">${url.clicks}</td>
               <td class="px-6 py-4 text-center">
-                <button class="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg text-sm" onclick="navigator.clipboard.writeText('http://localhost:5000/${url.shortCode}'); showToast('Short URL copied! 📋')">
+                <button class="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg text-sm" onclick="navigator.clipboard.writeText('https://linkshield-url-shortener-soc2.onrender.com/${url.shortCode}'); showToast('Short URL copied! 📋')">
                   📋 Copy
                 </button>
               </td>
@@ -312,7 +312,7 @@ function bindShortenForm() {
         message.textContent = "⏳ Creating short URL...";
       }
 
-      const res = await fetch("http://localhost:5000/shorten", {
+      const res = await fetch("https://linkshield-url-shortener-soc2.onrender.com/shorten", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -389,3 +389,4 @@ function renderBarChart() {
     },
   });
 }
+
