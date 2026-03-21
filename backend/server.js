@@ -11,7 +11,35 @@ const app = express();
 
 app.set("trust proxy", true);
 
-app.use(cors());
+const normalizeOrigin = (origin) => origin?.trim().replace(/\/+$/, "");
+const allowedOriginsFromEnv = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || "")
+    .split(",")
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+const localDevOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+];
+
+const allowedOrigins = [...new Set([...allowedOriginsFromEnv, ...localDevOrigins])];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        const normalizedOrigin = normalizeOrigin(origin);
+        if (allowedOrigins.includes(normalizedOrigin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
