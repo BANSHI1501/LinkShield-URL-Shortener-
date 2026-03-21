@@ -101,23 +101,26 @@ function renderDashboard() {
   if (!container) return;
 
   if (!dashboardData) {
-    container.innerHTML = "<h2>Loading...</h2>";
+    container.innerHTML = '<div class="flex items-center justify-center h-screen"><h2 class="text-2xl text-white">Loading...</h2></div>';
     return;
   }
 
   const chartListHtml =
     chartDataList && chartDataList.length > 0
       ? `
-    <div style="margin-top: 40px; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
-      <h3>Last 7 Days Clicks</h3>
-      ${chartDataList
-        .map(
-          (d, i) =>
-            `<p style="padding: 8px; background: #f3f4f6; margin-bottom: 8px; border-radius: 4px;">
-            ${d.date} → ${d.clicks}
-          </p>`
-        )
-        .join("")}
+    <div class="mt-12 mx-auto max-w-md bg-slate-800 rounded-lg p-6 border border-slate-700">
+      <h3 class="text-lg font-bold text-white mb-4">📊 Last 7 Days Clicks</h3>
+      <div class="space-y-2">
+        ${chartDataList
+          .map(
+            (d) =>
+              `<div class="flex justify-between bg-slate-700/50 p-3 rounded-md text-white">
+              <span class="font-semibold">${d.date}</span>
+              <span class="text-green-400 font-bold">${d.clicks} clicks</span>
+            </div>`
+          )
+          .join("")}
+      </div>
     </div>
   `
       : "";
@@ -125,120 +128,102 @@ function renderDashboard() {
   const urlTableHtml =
     dashboardData.urls && dashboardData.urls.length > 0
       ? `
-    <h2 style="margin-top: 40px;">🔗 Your URLs</h2>
-    <table style="margin: 20px auto; border-collapse: collapse; width: 80%; color: white;">
-      <thead>
-        <tr>
-          <th style="border: 1px solid gray; padding: 10px;">Short URL</th>
-          <th style="border: 1px solid gray; padding: 10px;">Original URL</th>
-          <th style="border: 1px solid gray; padding: 10px;">Clicks</th>
-          <th style="border: 1px solid gray; padding: 10px;">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${dashboardData.urls
-          .sort((a, b) => b.clicks - a.clicks)
-          .map(
-            (url, index) => `
-          <tr style="background: ${index % 2 === 0 ? "#1f2937" : "#111827"};">
-            <td style="border: 1px solid gray; padding: 10px;">
-              <a href="http://localhost:5000/${url.shortCode}" target="_blank" rel="noreferrer">${url.shortCode}</a>
-              ${index === 0 && dashboardData.urls.length > 0 ? ' <span style="background: #f59e0b; color: black; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 4px;">🏆 TOP</span>' : ""}
-              ${url.expiresAt && new Date(url.expiresAt) < new Date() ? ` <span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px;">⏰ EXPIRED</span>` : ""}
-            </td>
-            <td style="border: 1px solid gray; padding: 10px;">${url.originalUrl.substring(0, 40)}...</td>
-            <td style="border: 1px solid gray; padding: 10px; text-align: center;">${url.clicks}</td>
-            <td style="border: 1px solid gray; padding: 10px;">
-              <button
-                style="padding: 6px 10px; cursor: pointer; background: linear-gradient(90deg, #22c55e, #16a34a); color: black; border: 0; border-radius: 4px; font-weight: 600;"
-                onclick="navigator.clipboard.writeText('http://localhost:5000/${url.shortCode}'); showToast('Short URL copied! 📋')"
-              >
-                Copy
-              </button>
-            </td>
+    <h2 class="text-3xl font-bold text-white mt-12 mb-6">🔗 Your URLs</h2>
+    <div class="mx-auto max-w-6xl overflow-x-auto">
+      <table class="w-full text-white">
+        <thead class="bg-gradient-to-r from-green-600 to-green-700">
+          <tr>
+            <th class="px-6 py-3 text-left font-bold">Short URL</th>
+            <th class="px-6 py-3 text-left font-bold">Original URL</th>
+            <th class="px-6 py-3 text-center font-bold">Clicks</th>
+            <th class="px-6 py-3 text-center font-bold">Action</th>
           </tr>
-        `
-          )
-          .join("")}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          ${dashboardData.urls
+            .sort((a, b) => b.clicks - a.clicks)
+            .map(
+              (url, index) => `
+            <tr class="border-b border-slate-700 ${index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-900'} hover:bg-slate-700/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <a href="http://localhost:5000/${url.shortCode}" target="_blank" rel="noreferrer" class="text-green-400 hover:text-green-300 font-mono font-bold">${url.shortCode}</a>
+                  ${index === 0 && dashboardData.urls.length > 0 ? '<span class="bg-amber-500 text-black px-2 py-1 rounded text-xs font-bold">🏆 TOP</span>' : ""}
+                  ${url.expiresAt && new Date(url.expiresAt) < new Date() ? '<span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">⏰ EXPIRED</span>' : ""}
+                </div>
+              </td>
+              <td class="px-6 py-4 text-slate-300 text-sm">${url.originalUrl.substring(0, 50)}...</td>
+              <td class="px-6 py-4 text-center font-bold text-green-400">${url.clicks}</td>
+              <td class="px-6 py-4 text-center">
+                <button class="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg text-sm" onclick="navigator.clipboard.writeText('http://localhost:5000/${url.shortCode}'); showToast('Short URL copied! 📋')">
+                  📋 Copy
+                </button>
+              </td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
   `
       : "";
 
   const createResultHtml = latestShortResult
     ? `
-      <div style="margin-top: 16px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; padding: 16px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);">
-        <h3 style="margin: 0 0 12px 0; color: white;">✅ Short URL Created!</h3>
-        <p style="margin: 6px 0;"><strong>Short URL:</strong> <a href="${latestShortResult.shortUrl}" target="_blank" rel="noreferrer" style="color: #fbbf24;">${latestShortResult.shortUrl}</a></p>
-        <p style="margin: 6px 0;"><strong>Short Code:</strong> ${latestShortResult.shortCode}</p>
-        ${latestShortResult.expiresAt ? `<p style="margin: 6px 0;"><strong>Expiry:</strong> ${new Date(latestShortResult.expiresAt).toLocaleString()}</p>` : ""}
-        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-          <button onclick="navigator.clipboard.writeText('${latestShortResult.shortUrl}'); showToast('Link copied! 📋')" style="padding: 8px 12px; background: #fbbf24; color: black; border: 0; border-radius: 6px; cursor: pointer; font-weight: 600;">📋 Copy Link</button>
-          <a href="${latestShortResult.shortUrl}" target="_blank" style="padding: 8px 12px; background: #3b82f6; color: white; border: 0; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">🔗 Open</a>
-          ${latestShortResult.qrCode ? `<a href="${latestShortResult.qrCode}" download="qr-${latestShortResult.shortCode}.png" style="padding: 8px 12px; background: #8b5cf6; color: white; border: 0; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;">⬇️ Download QR</a>` : ""}
+      <div class="mt-6 p-6 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl shadow-2xl border border-green-500">
+        <h3 class="text-2xl font-bold text-white mb-4">✅ Short URL Created!</h3>
+        <div class="space-y-3 mb-4">
+          <p class="text-white"><strong>Short URL:</strong> <a href="${latestShortResult.shortUrl}" target="_blank" rel="noreferrer" class="text-amber-300 hover:text-amber-200 font-bold">${latestShortResult.shortUrl}</a></p>
+          <p class="text-white"><strong>Short Code:</strong> <span class="font-mono text-amber-300">${latestShortResult.shortCode}</span></p>
+          ${latestShortResult.expiresAt ? `<p class="text-white"><strong>Expiry:</strong> <span class="text-amber-300">${new Date(latestShortResult.expiresAt).toLocaleString()}</span></p>` : ""}
         </div>
-        ${latestShortResult.qrCode ? `<img src="${latestShortResult.qrCode}" alt="QR Code" style="margin-top: 12px; width: 140px; height: 140px; background: white; padding: 8px; border-radius: 8px;" />` : ""}
+        <div class="flex gap-3 flex-wrap mb-4">
+          <button onclick="navigator.clipboard.writeText('${latestShortResult.shortUrl}'); showToast('Link copied! 📋')" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg">📋 Copy Link</button>
+          <a href="${latestShortResult.shortUrl}" target="_blank" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">🔗 Open</a>
+          ${latestShortResult.qrCode ? `<a href="${latestShortResult.qrCode}" download="qr-${latestShortResult.shortCode}.png" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">⬇️ Download QR</a>` : ""}
+        </div>
+        ${latestShortResult.qrCode ? `<div class="bg-white p-3 rounded-lg w-fit mx-auto"><img src="${latestShortResult.qrCode}" alt="QR Code" class="w-40 h-40" /></div>` : ""}
       </div>
     `
     : "";
 
   container.innerHTML = `
-    <div style="padding: 30px; text-align: center;">
-      <h1>📊 Dashboard</h1>
+    <style>
+      .btn-hover:hover { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+    </style>
+    <div class="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 p-8">
+      <h1 class="text-5xl font-bold text-center text-white mb-2">📊 Dashboard</h1>
+      <p class="text-center text-slate-400 mb-8">Manage your short URLs with advanced analytics</p>
 
-      <div style="max-width: 720px; margin: 20px auto; text-align: left; background: #0f172a; color: white; border-radius: 12px; padding: 18px; box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);">
-        <h2 style="margin-top: 0;">🚀 Create Short URL</h2>
-        <form id="shorten-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <input id="original-url" type="url" placeholder="Original URL (required)" required style="padding: 10px; border-radius: 6px; border: 2px solid #334155; transition: border 0.2s; background: #1f2937; color: white;" />
-          <input id="custom-shortcode" type="text" placeholder="Custom short code (optional)" pattern="^[a-zA-Z0-9_-]{3,20}$" style="padding: 10px; border-radius: 6px; border: 2px solid #334155; transition: border 0.2s; background: #1f2937; color: white;" />
-          <input id="url-password" type="text" placeholder="Password (optional)" style="padding: 10px; border-radius: 6px; border: 2px solid #334155; transition: border 0.2s; background: #1f2937; color: white;" />
-          <input id="expires-at" type="datetime-local" style="padding: 10px; border-radius: 6px; border: 2px solid #334155; transition: border 0.2s; background: #1f2937; color: white;" />
-          <button id="shorten-btn" type="submit" style="grid-column: span 2; padding: 12px; border: 0; border-radius: 6px; cursor: pointer; background: linear-gradient(90deg, #22c55e, #16a34a); color: #052e16; font-weight: 700; transition: all 0.3s; box-shadow: 0 0 20px rgba(34,197,94,0.2);">🚀 Generate Short URL + QR</button>
+      <div class="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-xl max-w-2xl mx-auto mb-10 p-8">
+        <h2 class="text-2xl font-bold text-white mb-6">🚀 Create Short URL</h2>
+        <form id="shorten-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input id="original-url" type="url" placeholder="Original URL (required)" required class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+          <input id="custom-shortcode" type="text" placeholder="Custom short code (optional)" pattern="^[a-zA-Z0-9_-]{3,20}$" class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+          <input id="url-password" type="text" placeholder="Password (optional)" class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+          <input id="expires-at" type="datetime-local" class="w-full px-3 py-2 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+          <button id="shorten-btn" type="submit" class="md:col-span-2 text-lg py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-black font-bold rounded-lg hover:shadow-lg btn-hover">🚀 Generate Short URL + QR</button>
         </form>
-        <style>
-          #original-url:focus, #custom-shortcode:focus, #url-password:focus, #expires-at:focus {
-            border-color: #22c55e !important;
-            outline: none;
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
-          }
-        </style>
-        <div id="shorten-message" style="margin-top: 10px;"></div>
+        <div id="shorten-message" class="mt-4"></div>
         ${createResultHtml}
       </div>
 
-      <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px;">
-        
-        <div style="
-          background: linear-gradient(135deg, #1f2937, #111827);
-          padding: 20px;
-          border-radius: 10px;
-          width: 200px;
-          color: white;
-          box-shadow: 0 0 15px rgba(34,197,94,0.1);
-          border: 1px solid #22c55e;
-        ">
-          <h3>Total URLs</h3>
-          <h1>${dashboardData.totalUrls || 0}</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-10">
+        <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-green-500/30 shadow-lg hover:shadow-green-500/20 text-center">
+          <h3 class="text-slate-300 text-lg font-semibold">Total URLs</h3>
+          <h1 class="text-5xl font-bold text-green-400">${dashboardData.totalUrls || 0}</h1>
         </div>
 
-        <div style="
-          background: linear-gradient(135deg, #1f2937, #111827);
-          padding: 20px;
-          border-radius: 10px;
-          width: 200px;
-          color: white;
-          box-shadow: 0 0 15px rgba(34,197,94,0.1);
-          border: 1px solid #22c55e;
-        ">
-          <h3>Total Clicks</h3>
-          <h1>${dashboardData.totalClicks || 0}</h1>
+        <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-green-500/30 shadow-lg hover:shadow-green-500/20 text-center">
+          <h3 class="text-slate-300 text-lg font-semibold">Total Clicks</h3>
+          <h1 class="text-5xl font-bold text-green-400">${dashboardData.totalClicks || 0}</h1>
         </div>
-
       </div>
 
-      <div style="width: 600px; margin: 40px auto; background: #111827; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(34,197,94,0.1);">
-        <h2>📊 Clicks Graph</h2>
-        <canvas id="clicks-chart"></canvas>
+      <div class="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-xl max-w-3xl mx-auto mb-10 p-8">
+        <h2 class="text-2xl font-bold text-white mb-6">📊 7-Day Click Chart</h2>
+        <canvas id="clicks-chart" class="w-full"></canvas>
       </div>
 
       ${chartListHtml}

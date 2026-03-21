@@ -1,4 +1,4 @@
-import './style.css'
+import './index.css'
 import App from './app.js'
 import { initDashboard } from './components/Dashboard.js'
 
