@@ -51,7 +51,7 @@ router.get("/analytics", optionalAuth, async (req, res) => {
 
 
 // ✅ 3. SHORTEN
-router.post("/shorten", authMiddleware, async (req, res) => {
+router.post("/shorten", optionalAuth, async (req, res) => {
     try {
         const { originalUrl, password, customShortCode, expiresAt } = req.body;
 
@@ -91,7 +91,7 @@ router.post("/shorten", authMiddleware, async (req, res) => {
         const newUrl = new Url({
             originalUrl,
             shortCode,
-            userId: req.user.id,
+            userId: req.user?.id || null,
             password: hashedPassword,
             expiresAt: parsedExpiry
         });

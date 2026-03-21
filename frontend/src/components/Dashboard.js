@@ -445,7 +445,7 @@ function bindShortenForm() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create short URL");
+        throw new Error(data.error || data.message || `Failed to create short URL (${res.status})`);
       }
 
       latestShortResult = data;
