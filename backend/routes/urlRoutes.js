@@ -1,7 +1,7 @@
 import express from "express";
 import { nanoid } from "nanoid";
 import Url from "../models/Url.js";
-import authMiddleware from "../middleware/authMiddleware.js";
+import authMiddleware, { optionalAuth } from "../middleware/authMiddleware.js";
 import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
 
@@ -20,7 +20,7 @@ router.get("/my-urls", authMiddleware, async (req, res) => {
 
 
 // ✅ 2. ANALYTICS
-router.get("/analytics", authMiddleware, async (req, res) => {
+router.get("/analytics", optionalAuth, async (req, res) => {
     try {
         const userId = req.user?.id;
         
@@ -132,7 +132,7 @@ router.get("/analytics/top", authMiddleware, async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 });
-router.get("/analytics/last7days", authMiddleware, async (req, res) => {
+router.get("/analytics/last7days", optionalAuth, async (req, res) => {
     try {
         const userId = req.user?.id;
         
