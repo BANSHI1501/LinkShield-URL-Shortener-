@@ -22,10 +22,16 @@ router.get("/my-urls", authMiddleware, async (req, res) => {
 // ✅ 2. ANALYTICS
 router.get("/analytics", authMiddleware, async (req, res) => {
     try {
-        const urls = await Url.find({ userId: req.user.id });
+        const userId = req.user?.id;
+        
+        let urls;
+        if (userId) {
+            urls = await Url.find({ userId });
+        } else {
+            urls = await Url.find({}).limit(100);
+        }
 
         const totalUrls = urls.length;
-
         let totalClicks = 0;
 
         urls.forEach(url => {
@@ -128,7 +134,14 @@ router.get("/analytics/top", authMiddleware, async (req, res) => {
 });
 router.get("/analytics/last7days", authMiddleware, async (req, res) => {
     try {
-        const urls = await Url.find({ userId: req.user.id });
+        const userId = req.user?.id;
+        
+        let urls;
+        if (userId) {
+            urls = await Url.find({ userId });
+        } else {
+            urls = await Url.find({}).limit(100);
+        }
 
         const last7Days = [];
 

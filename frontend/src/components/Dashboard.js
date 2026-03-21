@@ -16,9 +16,11 @@ ChartJS.register(
   Legend
 );
 
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YmQ4OGYzYTI3NmU3NzViYWU0MDI5MiIsImlhdCI6MTc3NDAzMTQ4MywiZXhwIjoxNzc0MTE3ODgzfQ.M91qNOE8EeFXLbmL74uMXyN-GSagOo2el5jxj2UYm40";
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const SHORTENER_BASE_URL = (import.meta.env.VITE_SHORTENER_BASE_URL || API_BASE_URL).replace(/\/$/, "");
+
+// Get token from localStorage, fallback to demo token
+let token = localStorage.getItem("authToken") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YmQ4OGYzYTI3NmU3NzViYWU0MDI5MiIsImlhdCI6MTc3NDAzMTQ4MywiZXhwIjoxNzc0MTE3ODgzfQ.M91qNOE8EeFXLbmL74uMXyN-GSagOo2el5jxj2UYm40";
 
 let dashboardData = null;
 let chartDataList = null;
@@ -77,6 +79,10 @@ export async function initDashboard() {
         Authorization: `Bearer ${token}`,
       },
     });
+    
+    if (!res1.ok) {
+      throw new Error(`Analytics API failed: ${res1.status}`);
+    }
     dashboardData = await res1.json();
 
     const res2 = await fetch(`${API_BASE_URL}/analytics/last7days`, {
@@ -84,14 +90,23 @@ export async function initDashboard() {
         Authorization: `Bearer ${token}`,
       },
     });
-    chartDataList = await res2.json();
+    if (!res2.ok) {
+      throw new Error(`Last 7 days API failed: ${res2.status}`);
+    }
+    const data = await res2.json();
+    if (data.error || !Array.isArray(data)) {
+      console.error("Backend returned error:", data);
+      chartDataList = [];
+    } else {
+      chartDataList = data;
+    }
 
     renderDashboard();
   } catch (err) {
     console.error("Error loading dashboard:", err);
     const container = document.getElementById("dashboard-container");
     if (container) {
-      container.innerHTML = `<h2 style="color: red;">Error: ${ err.message}</h2>`;
+      container.innerHTML = `<h2 style="color: red;">Error: ${err.message}</h2><p style="color: #888; font-size: 14px;">Please check the console (F12) for more details.</p>`;
     }
   }
 }
@@ -115,7 +130,7 @@ function renderDashboard() {
   }
 
   const chartListHtml =
-    chartDataList && chartDataList.length > 0
+    chartDataList && Array.isArray(chartDataList) && chartDataList.length > 0
       ? `
     <div style="margin-top: 80px; text-align: center;">
       <h3 style="font-size: 28px; font-weight: 700; color: white; margin-bottom: 30px;">📊 Last 7 Days Analytics</h3>
@@ -298,7 +313,7 @@ function renderDashboard() {
 }
 
 function renderBarChart() {
-  if (!chartDataList || chartDataList.length === 0) return;
+  if (!chartDataList || !Array.isArray(chartDataList) || chartDataList.length === 0) return;
 
   const canvas = document.getElementById("clicks-chart");
   if (!canvas) return;
