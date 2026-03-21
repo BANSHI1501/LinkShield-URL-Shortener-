@@ -43,3 +43,38 @@ Use ngrok to expose local backend:
 	- `VITE_API_BASE_URL`
 	- `VITE_SHORTENER_BASE_URL`
 4. Restart backend/frontend and create a new short URL
+
+## Deploy On Vercel
+
+This repository has separate `frontend` and `backend` apps.
+Deploy them as two Vercel projects.
+
+### 1) Deploy backend (API)
+
+1. Open Vercel dashboard and click **Add New Project**.
+2. Import this repository.
+3. Set **Root Directory** to `backend`.
+4. Add environment variables:
+	- `MONGO_URI`
+	- `SHORTENER_BASE_URL` = your backend Vercel domain (for example `https://your-backend.vercel.app`)
+5. Deploy.
+
+After deploy, test:
+- `https://your-backend.vercel.app/`
+- `https://your-backend.vercel.app/analytics` (requires auth token)
+
+### 2) Deploy frontend (Vite app)
+
+1. Create another Vercel project from the same repository.
+2. Set **Root Directory** to `frontend`.
+3. Add environment variables:
+	- `VITE_API_BASE_URL` = your backend Vercel URL
+	- `VITE_SHORTENER_BASE_URL` = your backend Vercel URL
+4. Deploy.
+
+### 3) Verify end-to-end
+
+1. Open frontend Vercel URL.
+2. Create a short URL.
+3. Confirm generated links use your backend Vercel domain (not localhost).
+4. Scan QR from phone. It should open from any network.
