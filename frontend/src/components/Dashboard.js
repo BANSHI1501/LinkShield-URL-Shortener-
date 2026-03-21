@@ -278,6 +278,15 @@ function renderDashboard() {
 
         ${ chartListHtml}
         ${ urlTableHtml}
+
+        <footer style="margin-top: 100px; padding: 40px 20px; border-top: 1px solid rgba(34, 197, 94, 0.2); text-align: center;">
+          <p style="color: #94a3b8; font-size: 14px; margin: 0; letter-spacing: 0.5px;">
+            © Banshi Prasad 26 | LinkShield URL Shortener - All rights reserved
+          </p>
+          <p style="color: #64748b; font-size: 12px; margin: 8px 0 0 0;">
+            Built with 💚 for amazing URL management
+          </p>
+        </footer>
       </div>
     </div>
   `;
