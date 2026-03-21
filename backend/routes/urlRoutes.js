@@ -7,6 +7,8 @@ import QRCode from "qrcode";
 
 const router = express.Router();
 
+const trimTrailingSlash = (value) => value.replace(/\/+$/, "");
+
 
 // ✅ 1. MY URLS
 router.get("/my-urls", authMiddleware, async (req, res) => {
@@ -90,7 +92,12 @@ router.post("/shorten", authMiddleware, async (req, res) => {
 
         await newUrl.save();
 
-        const shortUrl = `http://localhost:5000/${shortCode}`;
+        const configuredBaseUrl = process.env.SHORTENER_BASE_URL?.trim();
+        const requestBaseUrl = `${req.protocol}://${req.get("host")}`;
+        const shortBaseUrl = configuredBaseUrl
+            ? trimTrailingSlash(configuredBaseUrl)
+            : trimTrailingSlash(requestBaseUrl);
+        const shortUrl = `${shortBaseUrl}/${shortCode}`;
         const qrCode = await QRCode.toDataURL(shortUrl);
 
         res.json({

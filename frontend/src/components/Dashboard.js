@@ -17,6 +17,8 @@ ChartJS.register(
 );
 
 const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YmQ4OGYzYTI3NmU3NzViYWU0MDI5MiIsImlhdCI6MTc3NDAzMTQ4MywiZXhwIjoxNzc0MTE3ODgzfQ.M91qNOE8EeFXLbmL74uMXyN-GSagOo2el5jxj2UYm40";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const SHORTENER_BASE_URL = (import.meta.env.VITE_SHORTENER_BASE_URL || API_BASE_URL).replace(/\/$/, "");
 
 let dashboardData = null;
 let chartDataList = null;
@@ -70,14 +72,14 @@ if (!document.querySelector("style[data-toasts]")) {
 
 export async function initDashboard() {
   try {
-    const res1 = await fetch("http://localhost:5000/analytics", {
+    const res1 = await fetch(`${API_BASE_URL}/analytics`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     dashboardData = await res1.json();
 
-    const res2 = await fetch("http://localhost:5000/analytics/last7days", {
+    const res2 = await fetch(`${API_BASE_URL}/analytics/last7days`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -158,7 +160,7 @@ function renderDashboard() {
                 onmouseout="this.style.background='${ index % 2 === 0 ? 'linear-gradient(90deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6))' : 'rgba(15, 23, 42, 0.4)'}'; this.children[0].style.color='#22c55e'">
               <td style="padding: 16px; color: #22c55e; font-weight: 700; font-family: monospace; font-size: 13px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
-                  <a href="http://localhost:5000/${url.shortCode}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: none;">${url.shortCode}</a>
+                  <a href="${SHORTENER_BASE_URL}/${url.shortCode}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: none;">${url.shortCode}</a>
                   ${ index === 0 && dashboardData.urls.length > 0 ? '<span style="background: linear-gradient(135deg, #f59e0b, #f97316); color: black; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">🏆 TOP</span>' : ""}
                   ${ url.expiresAt && new Date(url.expiresAt) < new Date() ? '<span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">⏰ EXPIRED</span>' : ""}
                 </div>
@@ -169,7 +171,7 @@ function renderDashboard() {
                 <button style="padding: 8px 14px; background: linear-gradient(135deg, #22c55e, #16a34a); color: #052e16; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);"
                   onmouseover="this.style.boxShadow='0 8px 20px rgba(34, 197, 94, 0.4)'; this.style.transform='translateY(-2px)'"
                   onmouseout="this.style.boxShadow='0 4px 12px rgba(34, 197, 94, 0.2)'; this.style.transform='none'"
-                  onclick="navigator.clipboard.writeText('http://localhost:5000/${url.shortCode}'); showToast('URL copied! 📋', 'success')">
+                  onclick="navigator.clipboard.writeText('${SHORTENER_BASE_URL}/${url.shortCode}'); showToast('URL copied! 📋', 'success')">
                   📋 Copy
                 </button>
               </td>
@@ -417,7 +419,7 @@ function bindShortenForm() {
         message.textContent = "⏳ Creating short URL...";
       }
 
-      const res = await fetch("http://localhost:5000/shorten", {
+      const res = await fetch(`${API_BASE_URL}/shorten`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

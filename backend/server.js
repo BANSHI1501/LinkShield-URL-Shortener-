@@ -8,8 +8,20 @@ dotenv.config();
 
 const app = express();
 
+app.set("trust proxy", true);
+
 app.use(cors());
 app.use(express.json());
+
+app.get("/", (req, res) => {
+    res.json({
+        message: "URL Shortener API is running",
+        docs: {
+            auth: "/api/auth",
+            shorten: "/shorten"
+        }
+    });
+});
 
 app.use("/", urlRoutes);
 
