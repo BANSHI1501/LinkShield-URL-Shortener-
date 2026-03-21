@@ -1,8 +1,9 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import urlRoutes from "./routes/urlRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import connectDB from "./config/db.js";
 
 dotenv.config();
 
@@ -24,15 +25,19 @@ app.get("/", (req, res) => {
 });
 
 app.use("/", urlRoutes);
-
-const PORT = process.env.PORT || 5000;
-
-mongoose.connect(process.env.MONGO_URI)
-.then(() => {
-    console.log("MongoDB Connected");
-    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
-})
-.catch(err => console.log(err));
-import authRoutes from "./routes/authRoutes.js";
-
 app.use("/api/auth", authRoutes);
+
+export default app;
+
+export async function startServer() {
+    const PORT = process.env.PORT || 5000;
+    await connectDB();
+    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+}
+
+if (process.env.VERCEL !== "1") {
+    startServer().catch((err) => {
+        console.error("Failed to start server:", err);
+        process.exit(1);
+    });
+}
