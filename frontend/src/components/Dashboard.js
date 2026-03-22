@@ -16,16 +16,37 @@ ChartJS.register(
   Legend
 );
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://linkshield-url-shortener-soc2.onrender.com").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const SHORTENER_BASE_URL = (import.meta.env.VITE_SHORTENER_BASE_URL || API_BASE_URL).replace(/\/$/, "");
-
-// Get token from localStorage, fallback to demo token
-let token = localStorage.getItem("authToken") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YmQ4OGYzYTI3NmU3NzViYWU0MDI5MiIsImlhdCI6MTc3NDAzMTQ4MywiZXhwIjoxNzc0MTE3ODgzfQ.M91qNOE8EeFXLbmL74uMXyN-GSagOo2el5jxj2UYm40";
 
 let dashboardData = null;
 let chartDataList = null;
 let chartInstance = null;
 let latestShortResult = null;
+let isDashboardLoading = false;
+let autoRefreshInitialized = false;
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("authToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function setupDashboardAutoRefresh() {
+  if (autoRefreshInitialized) return;
+  autoRefreshInitialized = true;
+
+  const refreshIfVisible = () => {
+    if (!document.hidden) {
+      initDashboard();
+    }
+  };
+
+  window.addEventListener("focus", refreshIfVisible);
+  document.addEventListener("visibilitychange", refreshIfVisible);
+
+  // Keep cards/charts reasonably fresh while dashboard stays open.
+  setInterval(refreshIfVisible, 30000);
+}
 
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
@@ -67,47 +88,80 @@ if (!document.querySelector("style[data-toasts]")) {
       from { opacity: 0; transform: translateY(30px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    #expires-at::-webkit-calendar-picker-indicator {
+      filter: invert(66%) sepia(89%) saturate(382%) hue-rotate(92deg) brightness(96%) contrast(94%);
+      cursor: pointer;
+    }
     * { transition: all 0.2s ease; }
   `;
   document.head.appendChild(style);
 }
 
+window.showToast = showToast;
+window.initDashboard = initDashboard;
+
 export async function initDashboard() {
+  if (isDashboardLoading) return;
+
+  isDashboardLoading = true;
   try {
+    console.log("🚀 Starting dashboard initialization...");
+    
+    // First API call
+    console.log("📡 Fetching analytics data...");
     const res1 = await fetch(`${API_BASE_URL}/analytics`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
     });
     
     if (!res1.ok) {
       throw new Error(`Analytics API failed: ${res1.status}`);
     }
     dashboardData = await res1.json();
+    console.log("✅ Dashboard Data loaded:", dashboardData);
 
+    // Second API call
+    console.log("📡 Fetching last 7 days chart data...");
     const res2 = await fetch(`${API_BASE_URL}/analytics/last7days`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
     });
     if (!res2.ok) {
       throw new Error(`Last 7 days API failed: ${res2.status}`);
     }
     const data = await res2.json();
+    console.log("✅ Chart Data loaded:", data);
+    
     if (data.error || !Array.isArray(data)) {
-      console.error("Backend returned error:", data);
+      console.error("⚠️ Backend returned error or invalid data:", data);
       chartDataList = [];
     } else {
       chartDataList = data;
     }
 
+    console.log("✅ All data loaded successfully");
+    console.log("📊 Dashboard Data:", dashboardData);
+    console.log("📈 Chart Data:", chartDataList);
+    
+    // Render dashboard UI
     renderDashboard();
+    
+    // Bind form handlers
+    bindShortenForm();
+    setupDashboardAutoRefresh();
+    
+    // Render chart after DOM is ready
+    setTimeout(() => {
+      console.log("🎨 Initializing chart rendering...");
+      renderBarChart();
+    }, 300);
+    
   } catch (err) {
-    console.error("Error loading dashboard:", err);
+    console.error("❌ Error loading dashboard:", err);
     const container = document.getElementById("dashboard-container");
     if (container) {
-      container.innerHTML = `<h2 style="color: red;">Error: ${err.message}</h2><p style="color: #888; font-size: 14px;">Please check the console (F12) for more details.</p>`;
+      container.innerHTML = `<div style="padding: 40px; text-align: center;"><h2 style="color: #ef4444; font-size: 24px; margin: 0 0 16px 0;">❌ Error Loading Dashboard</h2><p style="color: #cbd5e1; font-size: 14px; margin: 0 0 10px 0;">${err.message}</p><p style="color: #64748b; font-size: 12px; margin: 0;">Please check the console (F12) for more details.</p></div>`;
     }
+  } finally {
+    isDashboardLoading = false;
   }
 }
 
@@ -134,18 +188,20 @@ function renderDashboard() {
       ? `
     <div style="margin-top: 80px; text-align: center;">
       <h3 style="font-size: 28px; font-weight: 700; color: white; margin-bottom: 30px;">📊 Last 7 Days Analytics</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; max-width: 900px; margin: 0 auto;">
-        ${ chartDataList
-          .map(
-            (d) =>
-              `<div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); border: 1px solid #22c55e; cursor: pointer;" 
-                  onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 12px 30px rgba(16, 185, 129, 0.5)'"
-                  onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 20px rgba(16, 185, 129, 0.3)'">
-                <p style="color: #f3f4f6; font-size: 12px; margin: 0 0 8px 0; font-weight: 700; letter-spacing: 0.5px;">${d.date}</p>
-                <p style="color: #fbbf24; font-size: 26px; font-weight: 800; margin: 0;">${d.clicks}</p>
-              </div>`
-          )
-          .join("")}
+      <div style="overflow-x: auto; padding: 0 20px;">
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(140px, 1fr)); gap: 12px; min-width: 1060px; max-width: 1200px; margin: 0 auto;">
+          ${ chartDataList
+            .map(
+              (d) =>
+                `<div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); border: 1px solid #22c55e; cursor: pointer; transition: all 0.3s ease;" 
+                    onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 12px 30px rgba(16, 185, 129, 0.5)'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 8px 20px rgba(16, 185, 129, 0.3)'">
+                  <p style="color: #f3f4f6; font-size: 13px; margin: 0 0 8px 0; font-weight: 700; letter-spacing: 0.5px;">${d.date}</p>
+                  <p style="color: #fbbf24; font-size: 28px; font-weight: 800; margin: 0;">${d.clicks}</p>
+                </div>`
+            )
+            .join("")}
+        </div>
       </div>
     </div>
   `
@@ -175,7 +231,7 @@ function renderDashboard() {
                 onmouseout="this.style.background='${ index % 2 === 0 ? 'linear-gradient(90deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6))' : 'rgba(15, 23, 42, 0.4)'}'; this.children[0].style.color='#22c55e'">
               <td style="padding: 16px; color: #22c55e; font-weight: 700; font-family: monospace; font-size: 13px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
-                  <a href="${SHORTENER_BASE_URL}/${url.shortCode}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: none;">${url.shortCode}</a>
+                  <a href="${SHORTENER_BASE_URL}/${url.shortCode}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: none;" onclick="setTimeout(() => window.initDashboard && window.initDashboard(), 1500)">${url.shortCode}</a>
                   ${ index === 0 && dashboardData.urls.length > 0 ? '<span style="background: linear-gradient(135deg, #f59e0b, #f97316); color: black; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">🏆 TOP</span>' : ""}
                   ${ url.expiresAt && new Date(url.expiresAt) < new Date() ? '<span style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">⏰ EXPIRED</span>' : ""}
                 </div>
@@ -290,7 +346,9 @@ function renderDashboard() {
 
         <div style="max-width: 900px; margin: 0 auto 80px auto; padding: 32px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
           <h2 style="font-size: 22px; font-weight: 700; color: white; margin: 0 0 24px 0;">📈 7-Day Performance Chart</h2>
-          <canvas id="clicks-chart" style="width: 100%;"></canvas>
+          <div style="position: relative; width: 100%; height: 400px;">
+            <canvas id="clicks-chart" style="width: 100% !important; height: 400px !important;"></canvas>
+          </div>
         </div>
 
         ${ chartListHtml}
@@ -307,54 +365,122 @@ function renderDashboard() {
       </div>
     </div>
   `;
-
-  renderBarChart();
-  bindShortenForm();
 }
 
 function renderBarChart() {
-  if (!chartDataList || !Array.isArray(chartDataList) || chartDataList.length === 0) return;
-
   const canvas = document.getElementById("clicks-chart");
-  if (!canvas) return;
+  
+  if (!canvas) {
+    console.error("❌ Canvas element not found");
+    return;
+  }
 
+  if (!chartDataList || !Array.isArray(chartDataList) || chartDataList.length === 0) {
+    console.warn("⚠️ No chart data available");
+    return;
+  }
+
+  // Destroy existing chart
   if (chartInstance) {
     chartInstance.destroy();
   }
 
-  chartInstance = new ChartJS(canvas, {
-    type: "bar",
-    data: {
-      labels: chartDataList.map((d) => d.date),
-      datasets: [
-        {
-          label: "Clicks",
-          data: chartDataList.map((d) => d.clicks),
-          backgroundColor: "linear-gradient(135deg, #22c55e, #10b981)",
-          borderColor: "#22c55e",
-          borderWidth: 2,
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { labels: { color: "white", font: { size: 13, weight: "bold" } } },
+  try {
+    console.log("📊 Creating chart with data:", chartDataList);
+    
+    // Prepare data
+    const labels = chartDataList.map((d) => d.date);
+    const data = chartDataList.map((d) => d.clicks);
+    
+    console.log("📈 Labels:", labels);
+    console.log("📈 Values:", data);
+    
+    // Create chart
+    chartInstance = new ChartJS(canvas, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Clicks",
+            data: data,
+            backgroundColor: "#22c55e",
+            borderColor: "#10b981",
+            borderWidth: 2,
+            borderRadius: 6,
+            borderSkipped: false,
+            barPercentage: 0.7,
+            categoryPercentage: 0.8,
+          },
+        ],
       },
-      scales: {
-        x: { 
-          ticks: { color: "#cbd5e1", font: { size: 12 } }, 
-          grid: { color: "rgba(34, 197, 94, 0.1)" } 
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'x',
+        interaction: {
+          intersect: false,
+          mode: 'index',
         },
-        y: { 
-          ticks: { color: "#cbd5e1", font: { size: 12 } }, 
-          grid: { color: "rgba(34, 197, 94, 0.1)" } 
+        plugins: {
+          legend: { 
+            display: true,
+            position: 'top',
+            labels: { 
+              color: "#ffffff", 
+              font: { size: 14, weight: "bold" },
+              padding: 15,
+              usePointStyle: true,
+            } 
+          },
+          tooltip: {
+            enabled: true,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            titleColor: '#22c55e',
+            bodyColor: '#fff',
+            borderColor: '#22c55e',
+            borderWidth: 2,
+            padding: 12,
+            displayColors: false,
+          },
+        },
+        scales: {
+          x: { 
+            stacked: false,
+            ticks: { 
+              color: "#cbd5e1", 
+              font: { size: 12 },
+              autoSkip: false,
+            }, 
+            grid: { 
+              color: "rgba(34, 197, 94, 0.1)",
+              drawBorder: true,
+            } 
+          },
+          y: { 
+            stacked: false,
+            beginAtZero: true,
+            ticks: { 
+              color: "#cbd5e1", 
+              font: { size: 12 },
+              callback: function(value) {
+                return Math.floor(value);
+              }
+            }, 
+            grid: { 
+              color: "rgba(34, 197, 94, 0.15)",
+              drawBorder: true,
+            }
+          },
         },
       },
-    },
-  });
+    });
+    
+    console.log("✅ Chart created and rendered successfully");
+  } catch (error) {
+    console.error("❌ Error creating chart:", error);
+    console.error("Error stack:", error.stack);
+  }
 }
 
 function bindShortenForm() {
@@ -438,7 +564,7 @@ function bindShortenForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(payload),
       });

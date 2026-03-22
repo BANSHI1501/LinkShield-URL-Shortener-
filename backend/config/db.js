@@ -1,33 +1,14 @@
 import mongoose from "mongoose";
 
-let connectionPromise = null;
-
-const connectDB = async () => {
+async function connectDB() {
   const mongoUri = process.env.MONGO_URI;
 
   if (!mongoUri) {
-    throw new Error("MONGO_URI is missing in .env");
+    throw new Error("MONGO_URI is not defined in environment variables");
   }
 
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
-
-  if (!connectionPromise) {
-    connectionPromise = mongoose
-      .connect(mongoUri)
-      .then((conn) => {
-        console.log("MongoDB Connected");
-        return conn;
-      })
-      .catch((error) => {
-        connectionPromise = null;
-        throw error;
-      });
-  }
-
-  await connectionPromise;
-  return mongoose.connection;
-};
+  await mongoose.connect(mongoUri);
+  console.log("MongoDB connected");
+}
 
 export default connectDB;

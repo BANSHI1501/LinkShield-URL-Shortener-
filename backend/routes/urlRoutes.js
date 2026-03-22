@@ -9,7 +9,6 @@ const router = express.Router();
 
 const trimTrailingSlash = (value) => value.replace(/\/+$/, "");
 
-
 // ✅ 1. MY URLS
 router.get("/my-urls", authMiddleware, async (req, res) => {
     console.log("MY URLS HIT");
@@ -17,7 +16,6 @@ router.get("/my-urls", authMiddleware, async (req, res) => {
     const urls = await Url.find({ userId: req.user.id });
     res.json(urls);
 });
-
 
 // ✅ 2. ANALYTICS
 router.get("/analytics", optionalAuth, async (req, res) => {
@@ -48,7 +46,6 @@ router.get("/analytics", optionalAuth, async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 });
-
 
 // ✅ 3. SHORTEN
 router.post("/shorten", optionalAuth, async (req, res) => {
@@ -103,6 +100,7 @@ router.post("/shorten", optionalAuth, async (req, res) => {
         const shortBaseUrl = configuredBaseUrl
             ? trimTrailingSlash(configuredBaseUrl)
             : trimTrailingSlash(requestBaseUrl);
+
         const shortUrl = `${shortBaseUrl}/${shortCode}`;
         const qrCode = await QRCode.toDataURL(shortUrl);
 
@@ -112,15 +110,16 @@ router.post("/shorten", optionalAuth, async (req, res) => {
             expiresAt: parsedExpiry,
             qrCode
         });
+
     } catch (error) {
         if (error?.code === 11000) {
-            return res.status(409).json({ error: "Short code already exists, try another one" });
+            return res.status(409).json({ error: "Short code already exists" });
         }
         res.status(500).json({ error: "Server Error" });
     }
 });
 
-
+// ✅ 4. TOP URL
 router.get("/analytics/top", authMiddleware, async (req, res) => {
     try {
         const topUrl = await Url.findOne({ userId: req.user.id })
@@ -132,6 +131,8 @@ router.get("/analytics/top", authMiddleware, async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 });
+
+// ✅ 5. LAST 7 DAYS ANALYTICS
 router.get("/analytics/last7days", optionalAuth, async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -144,6 +145,7 @@ router.get("/analytics/last7days", optionalAuth, async (req, res) => {
         }
 
         const last7Days = [];
+        const dayMap = new Map();
 
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
@@ -151,19 +153,31 @@ router.get("/analytics/last7days", optionalAuth, async (req, res) => {
 
             const day = date.toISOString().split("T")[0];
 
-            let count = 0;
+            dayMap.set(day, 0);
+        }
 
-            urls.forEach(url => {
-                url.analytics.forEach(a => {
-                    const clickDate = new Date(a.clickedAt).toISOString().split("T")[0];
-                    if (clickDate === day) {
-                        count++;
-                    }
-                });
+        urls.forEach((url) => {
+            const analyticsEvents = Array.isArray(url.analytics) ? url.analytics : [];
+
+            analyticsEvents.forEach((event) => {
+                const clickDate = new Date(event.clickedAt).toISOString().split("T")[0];
+                if (dayMap.has(clickDate)) {
+                    dayMap.set(clickDate, dayMap.get(clickDate) + 1);
+                }
             });
 
-            last7Days.push({ date: day, clicks: count });
-        }
+            // Legacy fallback: if old docs have clicks but no analytics events, map them to created date.
+            if (analyticsEvents.length === 0 && url.clicks > 0) {
+                const createdDay = new Date(url.createdAt).toISOString().split("T")[0];
+                if (dayMap.has(createdDay)) {
+                    dayMap.set(createdDay, dayMap.get(createdDay) + url.clicks);
+                }
+            }
+        });
+
+        dayMap.forEach((clicks, date) => {
+            last7Days.push({ date, clicks });
+        });
 
         res.json(last7Days);
 
@@ -171,6 +185,8 @@ router.get("/analytics/last7days", optionalAuth, async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 });
+
+// ✅ 6. PER URL ANALYTICS
 router.get("/analytics/:shortCode", authMiddleware, async (req, res) => {
     try {
         const url = await Url.findOne({
@@ -193,7 +209,7 @@ router.get("/analytics/:shortCode", authMiddleware, async (req, res) => {
     }
 });
 
-// ❗ LAST (MOST IMPORTANT)
+// ✅ 7. REDIRECT (🔥 FIXED ANALYTICS)
 router.get("/:shortCode", async (req, res) => {
     console.log("SHORTCODE HIT:", req.params.shortCode);
 
@@ -222,7 +238,17 @@ router.get("/:shortCode", async (req, res) => {
         }
     }
 
+    // ✅ clicks increase
     url.clicks++;
+
+    // 🔥 ANALYTICS FIX
+    url.analytics.push({
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        referer: req.headers.referer || "direct",
+        clickedAt: new Date()
+    });
+
     await url.save();
 
     res.redirect(url.originalUrl);
