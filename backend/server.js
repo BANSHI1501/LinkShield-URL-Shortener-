@@ -11,7 +11,7 @@ const app = express();
 
 // 🔥 SIMPLE CORS (NO ERROR)
 app.use(cors({
-  origin: "*",   // sab allow (fast fix)
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : "*",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
